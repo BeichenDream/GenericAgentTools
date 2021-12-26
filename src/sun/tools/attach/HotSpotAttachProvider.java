@@ -207,7 +207,6 @@ public abstract class HotSpotAttachProvider extends AttachProvider {
         }
     }
     private static void init(){
-        patchHotSpotVirtualMachine();
         List<AttachProvider> providers=AttachProvider.providers();
         try {
             if (providers.size()<=0){
@@ -266,48 +265,6 @@ public abstract class HotSpotAttachProvider extends AttachProvider {
             e.printStackTrace();
         }
 
-    }
-
-    private static void patchHotSpotVirtualMachine(){
-        try {
-            try {
-                Class hotSpotVirtualMachineClass =Class.forName("sun.tools.attach.HotSpotVirtualMachine",true,ClassLoader.getSystemClassLoader());
-
-                Field field=hotSpotVirtualMachineClass.getDeclaredField("ALLOW_ATTACH_SELF");
-
-                if (Modifier.isFinal(field.getModifiers())){
-                    try {
-                        Field modifiersField=field.getClass().getDeclaredField("modifiers");
-                        modifiersField.setAccessible(true);
-                        modifiersField.set(field, field.getModifiers()&~Modifier.FINAL);
-                    }catch (Exception e){
-                        try {
-                            Method getDeclaredFields0 = Class.class.getDeclaredMethod("getDeclaredFields0", boolean.class);
-                            getDeclaredFields0.setAccessible(true);
-                            Field[] fields = (Field[]) getDeclaredFields0.invoke(Field.class, false);
-                            for (int i = 0; i < fields.length; i++) {
-                                if (fields[i].getName().equals("modifiers")){
-                                    Field modifiersField=fields[i];
-                                    modifiersField.setAccessible(true);
-                                    modifiersField.set(field, field.getModifiers()&~Modifier.FINAL);
-                                }
-                            }
-                        }catch (Exception e2){
-
-                        }
-                    }
-                }
-
-                field.setAccessible(true);
-
-                field.set(null, true);
-            }catch (Exception e){
-            }
-        }catch (Exception e){
-
-        }catch (Error err){
-
-        }
     }
 
     private static Method getMethodByClass(Class cs,String methodName,Class... parameters){
